@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Stranded Starship</title><style>[hidden]{display:none!important}</style></head><body>
+<title>Stranded Starship</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: one ship console. Status rail of 5 systems on top, one mission panel below. Deliberate single dark look (cockpit at night). */
+:root{
+  --space:#0e1430;        /* deep indigo hull */
+  --panel:#18204a;        /* console panel */
+  --panel-2:#212b5e;      /* raised controls */
+  --ink:#eef0ff;          /* readout text */
+  --dim:#a9b0dd;          /* secondary text */
+  --amber:#ffb347;        /* warning lights / accent */
+  --teal:#5fe0c4;         /* system online */
+  --red:#ff7a7a;          /* error */
+  --line:#34407e;
+  --display:"Chakra Petch", "Trebuchet MS", sans-serif;
+  --body:"Atkinson Hyperlegible", Verdana, sans-serif;
+  color-scheme:dark;
+}
+html,body{min-height:100%}
+body{background:var(--space);color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+#stars{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.wrap{position:relative;z-index:1;max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-family:var(--display);font-weight:700;font-size:1.5rem;letter-spacing:.06em;text-transform:uppercase}
+.brand small{display:block;font-size:.75rem;color:var(--amber);letter-spacing:.2em}
+.clock{font-family:var(--display);font-size:1.1rem;color:var(--dim);font-variant-numeric:tabular-nums;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 12px}
+.rail{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.sys{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 8px;text-align:center;font-family:var(--display);font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);min-width:0}
+.sys .light{width:12px;height:12px;border-radius:50%;margin:0 auto 6px;background:var(--red);box-shadow:0 0 8px var(--red)}
+.sys.on{color:var(--teal);border-color:var(--teal)}
+.sys.on .light{background:var(--teal);box-shadow:0 0 10px var(--teal)}
+.sys.now{color:var(--amber);border-color:var(--amber)}
+.sys.now .light{background:var(--amber);box-shadow:0 0 10px var(--amber);animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.35}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:18px}
+h1,h2{font-family:var(--display);font-weight:700;line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:2rem}
+h2{font-size:1.6rem}
+.tag{font-family:var(--display);color:var(--amber);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase}
+p{margin:0;max-width:65ch}
+.story{color:var(--ink)}
+.log{color:var(--dim);font-size:.95rem}
+.task{background:var(--panel-2);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.task h3{margin:0;font-family:var(--display);font-size:1.05rem;letter-spacing:.06em;text-transform:uppercase;color:var(--amber)}
+ol.probs{margin:0;padding-left:1.6em;display:grid;gap:6px}
+ol.probs b{font-variant-numeric:tabular-nums}
+.decoder,.grid,.tanks,.msgs{display:grid;gap:8px}
+.decoder{grid-template-columns:repeat(auto-fill,minmax(92px,1fr))}
+.chip{background:var(--space);border:1px solid var(--line);border-radius:8px;padding:6px;text-align:center;font-variant-numeric:tabular-nums}
+.chip b{display:block;font-family:var(--display);font-size:1.3rem;color:var(--teal)}
+.grid{grid-template-columns:repeat(4,1fr)}
+.rock{background:var(--space);border:1px solid var(--line);border-radius:50% 44% 52% 46%;aspect-ratio:1;max-width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-variant-numeric:tabular-nums;font-size:1.1rem;cursor:pointer;color:var(--ink);font-family:var(--body)}
+.rock span{font-family:var(--display);font-size:.85rem;color:var(--dim)}
+.rock[aria-pressed="true"]{border-color:var(--amber);background:#3a2f2a;box-shadow:0 0 0 2px var(--amber) inset}
+.tanks{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.tank{background:var(--space);border:1px solid var(--line);border-radius:10px;padding:12px;font-variant-numeric:tabular-nums}
+.tank b{display:block;font-family:var(--display);font-size:1.4rem}
+.msg{background:var(--space);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;gap:12px;align-items:baseline;font-variant-numeric:tabular-nums}
+.msg .n{font-family:var(--display);color:var(--amber);font-weight:700;min-width:1.5em}
+.code{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
+.code input{flex:1 1 200px;min-width:0;font-family:var(--display);font-size:1.6rem;letter-spacing:.15em;text-transform:uppercase;background:var(--space);color:var(--ink);border:2px solid var(--line);border-radius:10px;padding:10px 14px}
+.code input:focus{outline:none;border-color:var(--amber)}
+button{font-family:var(--display);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:1rem;border-radius:10px;border:2px solid transparent;padding:12px 18px;cursor:pointer}
+button:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.go{background:var(--amber);color:#2a1800}
+.ghost{background:transparent;color:var(--dim);border-color:var(--line)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.fb{min-height:1.5em;font-weight:700}
+.fb.bad{color:var(--red)}
+.fb.good{color:var(--teal)}
+.hint{background:var(--space);border-left:4px solid var(--teal);border-radius:6px;padding:10px 14px;color:var(--ink)}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.win{text-align:center;align-items:center}
+.big{font-family:var(--display);font-size:3rem;color:var(--teal);font-variant-numeric:tabular-nums}
+.stats{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.stat{background:var(--panel-2);border-radius:10px;padding:10px 16px;min-width:120px}
+.stat b{display:block;font-family:var(--display);font-size:1.5rem;color:var(--amber)}
+label{font-weight:700}
+@media (max-width:560px){
+  body{font-size:17px}
+  .panel{padding:18px}
+  .sys{font-size:.62rem;padding:8px 2px}
+  .grid{grid-template-columns:repeat(3,1fr)}
+  h1{font-size:1.6rem}
+}
+.panel.enter{animation:enter .6s cubic-bezier(.2,.8,.2,1)}
+@keyframes enter{from{opacity:0;transform:translateY(30px) scale(.97)}}
+.sys.just .light{animation:pop .8s ease-out}
+.sys.just{animation:glow 1.2s ease-out}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(2.2)}100%{transform:scale(1)}}
+@keyframes glow{0%{box-shadow:0 0 0 0 var(--teal)}100%{box-shadow:0 0 0 14px transparent}}
+#warp{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;text-align:center;pointer-events:none;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#warp[hidden]{display:none}
+#warp .w{display:flex;flex-direction:column;gap:6px;align-items:center}
+#warp b{font-family:var(--display);font-size:clamp(2rem,8vw,4rem);text-transform:uppercase;letter-spacing:.08em;color:var(--teal);text-shadow:0 0 24px var(--teal)}
+#warp small{font-family:var(--display);color:var(--ink);letter-spacing:.2em;text-transform:uppercase}
+#warp.go .w{animation:zoom 1.9s ease-in-out forwards}
+@keyframes zoom{0%{opacity:0;transform:scale(.4)}20%{opacity:1;transform:scale(1.05)}30%{transform:scale(1)}75%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(2.4)}}
+.wrap.dim{transition:opacity .4s;opacity:.15}
+.big{animation:countup 1s ease-out}
+.nl svg{width:100%;max-width:520px;height:auto;display:block;margin:0 auto}
+.nl .ax{stroke:var(--dim);stroke-width:3}
+.nl .tk{stroke:var(--dim);stroke-width:2}
+.nl .lb{fill:var(--ink);font-family:var(--display);font-size:14px;font-weight:700}
+.nl .dot{fill:var(--amber)}
+.nl .dl{fill:var(--amber);font-family:var(--display);font-size:15px;font-weight:700}
+.nl p{text-align:center;max-width:none}
+.pick{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.pk{min-width:130px;font-size:1.4rem;background:var(--space);color:var(--ink);border-color:var(--line)}
+.pk:hover:not(:disabled){border-color:var(--amber)}
+.pk.right{background:var(--teal);color:#06231d;border-color:var(--teal)}
+.pk:disabled:not(.right){opacity:.4}
+.pk.wrong{border-color:var(--red);animation:shake .35s}
+.nl.done{border:2px solid var(--teal)}
+.finish{background:var(--space);border:2px dashed var(--amber);border-radius:14px;padding:14px 24px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.who{font-family:var(--display);font-size:1.4rem}
+.ccode{font-family:var(--display);font-weight:700;font-size:clamp(2rem,9vw,3.2rem);letter-spacing:.12em;color:var(--amber);font-variant-numeric:tabular-nums}
+@keyframes countup{from{opacity:0;transform:scale(.5)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+
+<canvas id="stars" aria-hidden="true"></canvas>
+<div class="wrap">
+  <header>
+    <div class="brand"><small>Starship Decimal</small>Mission Control</div>
+    <div class="clock" id="clock" aria-live="off">00:00</div>
+  </header>
+  <nav class="rail" id="rail" aria-label="Ship systems"></nav>
+  <main class="panel" id="panel"></main>
+</div>
+<div id="warp" hidden aria-live="polite"><div class="w"><span class="tag">Repair complete</span><b id="warpText">Online</b><small id="warpSub">Warping to the next system</small></div></div>
+
+<script>
+const CODEC=(()=>{
+  const A="23456789ABCDEFGHJKLMNPQRSTUVWXYZ", SALT="decimal-ship-4";
+  const nn=s=>String(s).toUpperCase().replace(/[^A-Z0-9]/g,"");
+  const fnv=s=>{let h=0x811c9dc5;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,0x01000193)>>>0;}return h>>>0;};
+  function encode(name,secs,hints,tries){
+    secs=Math.max(0,Math.min(8191,Math.round(secs)));hints=Math.min(15,hints);tries=Math.min(63,tries);
+    const p=(secs<<10)|(hints<<6)|tries, n=nn(name);
+    const mask=fnv(SALT+n)&0x7FFFFF, chk=fnv(SALT+n+":"+p)&0xFFF;
+    let v=((p^mask)>>>0)*4096+chk, s="";
+    for(let i=0;i<7;i++){s=A[v%32]+s;v=Math.floor(v/32);}
+    return s.slice(0,3)+"-"+s.slice(3);
+  }
+  function decode(name,code){
+    const c=String(code).toUpperCase().replace(/[^A-Z0-9]/g,"");
+    if(c.length!==7) return null;
+    let v=0; for(const ch of c){const i=A.indexOf(ch); if(i<0) return null; v=v*32+i;}
+    const chk=v%4096, x=Math.floor(v/4096), n=nn(name);
+    const p=(x^(fnv(SALT+n)&0x7FFFFF))>>>0;
+    if(p>=(1<<23) || (fnv(SALT+n+":"+p)&0xFFF)!==chk) return null;
+    return {secs:p>>10, hints:(p>>6)&15, tries:p&63};
+  }
+  return {encode,decode};
+})();
+const ROOMS = [
+  { sys:"Oxygen", page:1, title:"Oxygen Is Leaking!",
+    story:"An asteroid bumped the Starship Decimal and the oxygen panel went dark. The computer will only restart if you round each air-tank reading to the nearest 10. Each answer matches a letter on the decoder. The letters spell the restart word.",
+    answer:"PLANET",
+    hints:["Look at the ones digit. 5 or more rounds up. 4 or less rounds down.","Only look at the ones digit, even in big numbers. 2,431 has a 1 in the ones place, so it rounds down to 2,430."],
+    wrong:{SCANOM:"Those letters come from rounding down every time. Check the ones digit again!"},
+    render:()=>`<div class="task"><h3>Round to the nearest 10</h3>
+      <ol class="probs"><li><b>46</b></li><li><b>539</b></li><li><b>2,431</b></li><li><b>53,902</b></li><li><b>87</b></li><li><b>7,165</b></li></ol></div>
+      <div class="task"><h3>Decoder</h3><div class="decoder">${
+        [[40,"S"],[50,"P"],[80,"O"],[90,"E"],[530,"C"],[540,"L"],[2430,"A"],[2440,"I"],[7160,"M"],[7170,"T"],[53900,"N"],[54000,"R"]]
+        .map(([n,l])=>`<div class="chip">${n.toLocaleString()}<b>${l}</b></div>`).join("")}</div></div>`,
+    prompt:"Type the 6-letter restart word" },
+  { sys:"Navigation", page:2, title:"Asteroid Field Ahead",
+    story:"The ship is drifting toward an asteroid field. Round each number to the nearest 100. Safe asteroids round to a number that ends in 700, like 700 or 3,700. Read the letters on the safe asteroids from left to right, top to bottom. They spell the safe route.",
+    answer:"ROCKET",
+    hints:["Look at the tens digit. 5 or more rounds up to the next hundred.","Only look at the tens digit. 13,651 has a 5 in the tens place, so it rounds up to 13,700. That ends in 700, so it is safe!"],
+    wrong:{ROCKETS:"Too many letters. Check each asteroid again."},
+    render:()=>`<div class="task"><h3>Which asteroids round to a number ending in 700?</h3>
+      <p class="log">Tap an asteroid to mark it. (Marks are just for you. The computer only checks your code.)</p>
+      <div class="grid">${
+        [[682,"R"],[98,"A"],[649,"S"],[2749,"O"],[8751,"P"],[13651,"C"],[12615,"L"],[705,"K"],[1798,"N"],[4731,"E"],[60760,"U"],[95695,"T"]]
+        .map(([n,l])=>`<button type="button" class="rock" aria-pressed="false">${n.toLocaleString()}<span>${l}</span></button>`).join("")}</div></div>`,
+    prompt:"Type the safe-route word" },
+  { sys:"Fuel", page:3, title:"Low Fuel Warning",
+    story:"To fly home, the engines need a fuel estimate. Round the fuel in each tank to the nearest 1,000. Then add your rounded numbers. The total is the fuel code.",
+    answer:"60000",
+    hints:["Look at the hundreds digit. 736 has a 7 in the hundreds place, so it rounds up to 1,000.","Your six rounded numbers should all end in 000. Add them up."],
+    wrong:{"59963":"That's the exact total. Round each tank to the nearest 1,000 first, then add.", "59000":"Close! Check each tank's hundreds digit again.", "61000":"Close! Look at the hundreds digit in each tank."},
+    render:()=>`<div class="task"><h3>Round each tank to the nearest 1,000</h3><div class="tanks">${
+        [["Tank A","736"],["Tank B","6,512"],["Tank C","23,481"],["Tank D","4,350"],["Tank E","9,280"],["Tank F","15,604"]]
+        .map(([t,n])=>`<div class="tank">${t}<b>${n}</b>gallons</div>`).join("")}</div>
+      <p>Add the 6 rounded numbers together.</p></div>`,
+    prompt:"Type the total fuel code", numeric:true },
+  { sys:"Radio", page:4, title:"Static on the Radio",
+    story:"Cadet Zip tried to fix the radio, but some of Zip's rounding is wrong. Check all 6 messages. The code is the numbers of the WRONG messages, from smallest to largest.",
+    answer:"245",
+    hints:["Check each one yourself first. Then compare your answer to Zip's.","Exactly 3 messages are wrong. Look closely at message 4: 95 rounded to the nearest 10."],
+    wrong:{"136":"Those are the messages Zip got right. We need the wrong ones!"},
+    render:()=>`<div class="task"><h3>Is Zip right or wrong?</h3><div class="msgs">${
+        ["852 rounded to the nearest 10 is <b>850</b>","38,519 rounded to the nearest 100 is <b>38,600</b>","61,247 rounded to the nearest 1,000 is <b>61,000</b>","95 rounded to the nearest 10 is <b>90</b>","1,099 rounded to the nearest 10 is <b>1,000</b>","7,604 rounded to the nearest 1,000 is <b>8,000</b>"]
+        .map((m,i)=>`<div class="msg"><span class="n">${i+1}</span><span>${m}</span></div>`).join("")}</div></div>`,
+    prompt:"Type the numbers of the wrong messages", numeric:true },
+  { sys:"Launch", page:5, title:"Launch the Rocket!",
+    story:"Last step! Each number sits on a number line. Tap the number it is closer to. Get all 6 right to launch the rocket.",
+    noForm:true,
+    taps:[{n:34,lo:30,hi:40,ans:30,place:"10"},{n:4186,lo:4180,hi:4190,ans:4190,place:"10"},{n:260,lo:200,hi:300,ans:300,place:"100"},{n:52430,lo:52400,hi:52500,ans:52400,place:"100"},{n:7500,lo:7000,hi:8000,ans:8000,place:"1,000",mid:true},{n:13800,lo:13000,hi:14000,ans:14000,place:"1,000"}],
+    hints:["Find the dot on the line. Is it closer to the left end or the right end?","If the dot is exactly in the middle, round up to the bigger number."],
+    render:()=>ROOMS[4].taps.map((t,i)=>numLine(t,i)).join("") }
+];
+
+const KEY="starship-decimal-v1";
+let S = {stage:-1, crew:"", start:0, end:0, hints:0, tries:0, shown:{}, picks:{}};
+try{ const saved=JSON.parse(localStorage.getItem(KEY)||"null"); if(saved) S={...S,...saved}; }catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm=(v,num)=>{v=String(v).toUpperCase().replace(/[\s,.\-]/g,""); return num? v.replace(/[^0-9]/g,""): v.replace(/[^A-Z0-9]/g,"");};
+const fmt=ms=>{const s=Math.max(0,Math.floor(ms/1000));return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")};
+
+function rail(){
+  $("#rail").innerHTML = ROOMS.map((r,i)=>{
+    let cls = S.stage>i || S.stage>=ROOMS.length ? "on" : S.stage===i ? "now" : "";
+    if(i===justFixed) cls+=" just";
+    const status = cls==="on"?"online":cls==="now"?"repairing":"offline";
+    return `<div class="sys ${cls}" aria-label="${r.sys} ${status}"><div class="light"></div>${r.sys}</div>`;
+  }).join("");
+}
+
+function render(){
+  rail();
+  const p=$("#panel"); p.classList.remove("win");
+  if(S.stage<0){
+    p.innerHTML=`<span class="tag">Incoming transmission</span>
+      <h1>Your starship is stranded in deep space.</h1>
+      <p class="story">An asteroid knocked out all 5 systems on the Starship Decimal. The only way to fix them is with rounding. Solve each puzzle in your Mission Log, then type the code here to bring each system back online.</p>
+      <p class="log">Work with your crew. You get 2 hints for each system, but hints add 1 minute to your time.</p>
+      <label for="crew">Your name, or your team name</label>
+      <div class="code"><input id="crew" maxlength="24" placeholder="Maria, or Team Nova" value="${esc(S.crew)}" style="letter-spacing:.04em;text-transform:none;font-size:1.3rem">
+      <button class="go" id="begin">Start mission</button></div>`;
+    $("#begin").onclick=()=>{S.crew=$("#crew").value.trim()||"Crew"; S.stage=0; S.start=Date.now(); save(); render();};
+    return;
+  }
+  if(S.stage>=ROOMS.length){
+    const total=(S.end-S.start)+S.hints*60000;
+    p.classList.add("win");
+    p.innerHTML=`<span class="tag">All systems online</span>
+      <h1>${esc(S.crew)}, you made it home!</h1>
+      <p class="story">The engines roar, the oxygen is flowing, and the Starship Decimal is headed back to Earth. Great rounding, cadets.</p>
+      <div class="finish"><span class="tag">Completion code</span><div class="who">${esc(S.crew)}</div><div class="ccode">${CODEC.encode(S.crew,(S.end-S.start)/1000,S.hints,S.tries)}</div></div>
+      <div class="big">${fmt(total)}</div>
+      <div class="stats"><div class="stat"><b>5 / 5</b>systems fixed</div><div class="stat"><b>${S.hints}</b>hints used</div><div class="stat"><b>${S.tries}</b>wrong codes</div></div>
+      <p class="log">Write this code at the bottom of your Mission Log, then show your teacher.</p>
+      <button class="ghost" id="reset">Start a new mission</button>`;
+    $("#reset").onclick=resetAll; return;
+  }
+  const r=ROOMS[S.stage], shown=S.shown[S.stage]||0;
+  p.innerHTML=`<span class="tag">System ${S.stage+1} of 5 · ${r.sys}</span>
+    <h2>${r.title}</h2>
+    <p class="story">${r.story}</p>
+    ${r.render()}
+    ${r.noForm?'<div class="fb" id="fb" role="status"></div>':`<form class="task" id="f" autocomplete="off">
+      <label for="ans">${r.prompt}</label>
+      <div class="code"><input id="ans" ${r.numeric?'inputmode="numeric"':''} maxlength="12" aria-describedby="fb"><button class="go" type="submit">Enter code</button></div>
+      <div class="fb" id="fb" role="status"></div>
+    </form>`}
+    <div id="hints">${r.hints.slice(0,shown).map((h,i)=>`<p class="hint"><b>Hint ${i+1}:</b> ${h}</p>`).join("")}</div>
+    <div class="row">${shown<r.hints.length?`<button class="ghost" id="hint">Use a hint (+1 min)</button>`:""}
+      <button class="ghost" id="reset" style="margin-left:auto">Restart</button></div>`;
+  p.querySelectorAll(".rock").forEach(b=>b.onclick=()=>b.setAttribute("aria-pressed",b.getAttribute("aria-pressed")==="true"?"false":"true"));
+  if($("#f")) $("#f").onsubmit=e=>{e.preventDefault(); check();};
+  p.querySelectorAll(".pk").forEach(b=>b.onclick=()=>tapPick(b));
+  if($("#hint")) $("#hint").onclick=()=>{S.shown[S.stage]=shown+1; S.hints++; save(); render();};
+  $("#reset").onclick=()=>{ const b=$("#reset"); if(b.dataset.sure){resetAll();} else {b.dataset.sure="1"; b.textContent="Tap again to restart";} };
+  if($("#ans")) $("#ans").focus({preventScroll:true});
+}
+
+function check(){
+  const r=ROOMS[S.stage], v=norm($("#ans").value, r.numeric), fb=$("#fb");
+  if(!v){fb.className="fb bad"; fb.textContent="Type a code first."; return;}
+  if(v===r.answer){ solved(r); return; }
+  S.tries++; save();
+  fb.className="fb bad";
+  fb.textContent = (r.wrong&&r.wrong[v]) || "Access denied. Check your rounding and try again.";
+  const inp=$("#ans"); inp.classList.remove("shake"); void inp.offsetWidth; inp.classList.add("shake"); inp.select();
+}
+
+function solved(r){
+  const fb=$("#fb"); fb.className="fb good"; fb.textContent=r.sys+" system online!";
+  const fixed=S.stage; S.picks={};
+  S.stage++; if(S.stage>=ROOMS.length) S.end=Date.now(); save();
+  const b=$("#f button"); if(b) b.disabled=true;
+  justFixed=fixed; rail();
+  setTimeout(()=>transition(r.sys, S.stage>=ROOMS.length), 500);
+}
+function numLine(t,i){
+  const done=S.picks&&S.picks[i], f=(t.n-t.lo)/(t.hi-t.lo), x=20+280*f;
+  const ticks=Array.from({length:11},(_,k)=>`<line x1="${20+28*k}" y1="${k%5?44:40}" x2="${20+28*k}" y2="${k%5?56:60}" class="tk"/>`).join("");
+  return `<div class="task nl ${done?"done":""}" data-i="${i}">
+    <h3>Round ${t.n.toLocaleString()} to the nearest ${t.place}</h3>
+    <svg viewBox="0 0 320 84" role="img" aria-label="${t.n.toLocaleString()} on a number line from ${t.lo.toLocaleString()} to ${t.hi.toLocaleString()}">
+      <line x1="20" y1="50" x2="300" y2="50" class="ax"/>${ticks}
+      <text x="20" y="78" class="lb" text-anchor="middle">${t.lo.toLocaleString()}</text>
+      <text x="300" y="78" class="lb" text-anchor="middle">${t.hi.toLocaleString()}</text>
+      <circle cx="${x}" cy="50" r="8" class="dot"/>
+      <text x="${x}" y="26" class="dl" text-anchor="middle">${t.n.toLocaleString()}</text>
+    </svg>
+    <p>${t.n.toLocaleString()} is closer to...</p>
+    <div class="pick">${[t.lo,t.hi].map(v=>`<button type="button" class="pk ${done&&v===t.ans?"right":""}" data-v="${v}" ${done?"disabled":""}>${v.toLocaleString()}</button>`).join("")}</div>
+  </div>`;
+}
+function tapPick(btn){
+  const r=ROOMS[S.stage], card=btn.closest(".nl"), i=+card.dataset.i, t=r.taps[i], v=+btn.dataset.v, fb=$("#fb");
+  S.picks=S.picks||{};
+  if(v===t.ans){
+    S.picks[i]=true; save();
+    card.classList.add("done"); btn.classList.add("right"); card.querySelectorAll(".pk").forEach(b=>b.disabled=true);
+    const left=r.taps.filter((_,j)=>!S.picks[j]).length;
+    if(!left){ solved(r); return; }
+    fb.className="fb good"; fb.textContent=`Yes! ${left} more to go.`;
+  } else {
+    S.tries++; save();
+    btn.classList.remove("wrong"); void btn.offsetWidth; btn.classList.add("wrong");
+    fb.className="fb bad";
+    fb.textContent = t.mid ? `${t.n.toLocaleString()} is exactly in the middle. Middle numbers round up.` : "Not quite. Look at the dot. Which end of the line is it closer to?";
+  }
+}
+
+let justFixed=-1;
+const STILL=matchMedia("(prefers-reduced-motion: reduce)").matches;
+function transition(sys, last){
+  const ov=$("#warp"), wrap=$(".wrap");
+  $("#warpText").textContent = last ? "Liftoff!" : sys+" online";
+  $("#warpSub").textContent = last ? "Next stop: Earth" : "Warping to the next system";
+  ov.hidden=false; ov.classList.remove("go"); void ov.offsetWidth; ov.classList.add("go");
+  wrap.classList.add("dim");
+  window.setWarp && setWarp(last?22:14);
+  setTimeout(()=>window.setWarp && setWarp(1), 1300);
+  setTimeout(()=>{
+    ov.hidden=true; ov.classList.remove("go"); wrap.classList.remove("dim");
+    render();
+    const p=$("#panel"); p.classList.remove("enter"); void p.offsetWidth; p.classList.add("enter");
+    setTimeout(()=>{justFixed=-1;},1300);
+    if(last) celebrate();
+  }, STILL?900:1900);
+}
+function celebrate(){
+  if(!window.burst) return;
+  const cols=["#5fe0c4","#ffb347","#ff7a7a","#eef0ff","#9aa7ff"];
+  for(let k=0;k<9;k++) setTimeout(()=>burst(innerWidth*(.15+Math.random()*.7), innerHeight*(.15+Math.random()*.4), cols[k%cols.length]), k*380);
+}
+
+function resetAll(){ S={stage:-1,crew:"",start:0,end:0,hints:0,tries:0,shown:{},picks:{}}; save(); render(); }
+
+setInterval(()=>{
+  const c=$("#clock");
+  if(S.stage<0){c.textContent="00:00";return;}
+  const end = S.stage>=ROOMS.length? S.end : Date.now();
+  c.textContent=fmt(end-S.start+S.hints*60000);
+},500);
+
+// starfield
+(function(){
+  const cv=$("#stars"), ctx=cv.getContext("2d"); let W,H,st=[],parts=[];
+  const still=STILL;
+  let warp=1, target=1;
+  window.setWarp=v=>{target=still?1:v;};
+  window.burst=(x,y,c)=>{ if(still) return; for(let i=0;i<70;i++){const a=Math.random()*6.283,v=Math.random()*5+1.5;parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:1,c});} };
+  function size(){W=cv.width=innerWidth;H=cv.height=innerHeight;st=Array.from({length:Math.round(W*H/6000)},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.4+.3,s:Math.random()*.25+.05}));}
+  function draw(){
+    warp+=(target-warp)*.07;
+    ctx.clearRect(0,0,W,H);
+    const cx=W/2, cy=H/2;
+    for(const p of st){
+      ctx.globalAlpha=Math.min(1,.3+p.r/2+(warp-1)*.05);
+      if(warp>1.3){
+        // streak outward from center like hyperspace
+        const dx=p.x-cx, dy=p.y-cy, d=Math.hypot(dx,dy)||1, len=(warp-1)*p.r*4;
+        ctx.strokeStyle="#dfe3ff"; ctx.lineWidth=p.r;
+        ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x-dx/d*len,p.y-dy/d*len); ctx.stroke();
+        p.x+=dx/d*(warp*p.s*6); p.y+=dy/d*(warp*p.s*6);
+        if(p.x<0||p.x>W||p.y<0||p.y>H){p.x=cx+(Math.random()-.5)*W*.3;p.y=cy+(Math.random()-.5)*H*.3;}
+      } else {
+        ctx.fillStyle="#dfe3ff"; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill();
+        if(!still){p.y+=p.s; if(p.y>H)p.y=0;}
+      }
+    }
+    for(const q of parts){ q.x+=q.vx; q.y+=q.vy; q.vy+=.06; q.vx*=.985; q.life-=.012;
+      ctx.globalAlpha=Math.max(0,q.life); ctx.fillStyle=q.c; ctx.beginPath(); ctx.arc(q.x,q.y,2.2,0,7); ctx.fill(); }
+    parts=parts.filter(q=>q.life>0);
+    ctx.globalAlpha=1;
+    if(!still) requestAnimationFrame(draw);
+  }
+  addEventListener("resize",()=>{size(); if(still) draw();}); size(); draw();
+})();
+
+window.claude?.hot?.snapshot?.(()=>S);
+const boot=d=>{ if(d&&typeof d.stage==="number") S={...S,...d}; render(); };
+window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
+</script>
+
+</body></html>
